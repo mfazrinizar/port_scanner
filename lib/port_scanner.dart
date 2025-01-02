@@ -1,4 +1,4 @@
-library port_scanner;
+library;
 
 export 'src/TCPScanner.dart';
 export 'src/ScanResult.dart';

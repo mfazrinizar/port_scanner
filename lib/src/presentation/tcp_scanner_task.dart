@@ -59,10 +59,10 @@ class TcpScannerTask {
     var reports = await Future.wait(_scanners.map((scanner) => scanner.scan()));
     // Collect results to the resulting report
     var scanReport = Report(host, ports, status: ReportStatus.finished);
-    reports.forEach((report) {
+    for (var report in reports) {
       scanReport.addOpen(ports: report.openPorts);
       scanReport.addClosed(ports: report.closedPorts);
-    });
+    }
     _isRunning = false;
     return _reportToTcpScannerTaskReport(scanReport);
   }
@@ -71,19 +71,19 @@ class TcpScannerTask {
   Future<TcpScannerTaskReport> get report async {
     var scanReport = Report(host, ports);
     var reports = await Future.wait(_scanners.map((scanner) => scanner.report));
-    reports.forEach((report) {
+    for (var report in reports) {
       scanReport.addOpen(ports: report.openPorts);
       scanReport.addClosed(ports: report.closedPorts);
       if (scanReport.status != ReportStatus.progress) {
         scanReport.status = report.status;
       }
-    });
+    }
     return _reportToTcpScannerTaskReport(scanReport);
   }
 
   /// Cancel scanner task
   Future<TcpScannerTaskReport> cancel() async {
-    var resultReport;
+    TcpScannerTaskReport resultReport;
     if (_isRunning) {
       var scanReport = await report;
       resultReport = TcpScannerTaskReport(
@@ -92,7 +92,9 @@ class TcpScannerTask {
           scanReport.openPorts,
           scanReport.closedPorts,
           TcpScannerTaskReportStatus.cancelled);
-      _scanners.forEach((scanner) => scanner.cancel());
+      for (var scanner in _scanners) {
+        scanner.cancel();
+      }
       _isRunning = false;
     } else {
       throw TcpScannerTaskException('TcpScannerTask can\'t be cancelled');

@@ -5,7 +5,7 @@ import 'dart:isolate';
 import '../domain/entities/report.dart';
 
 class ScannerIsolate {
-  static const String _status_message = 'status';
+  static const String _statusMessage = 'status';
   final String host;
   final List<int> ports;
   final Duration socketTimeout;
@@ -48,13 +48,13 @@ class ScannerIsolate {
   }
 
   Future<Report> get report async {
-    var result;
+    Report result;
     if (_report != null) {
       result = _report!;
     } else {
       result = Report(host, ports);
       if (_toIsolate != null) {
-        _toIsolate?.send(_status_message);
+        _toIsolate?.send(_statusMessage);
         result = await _streamController.stream.first;
         _flushStreamController();
       }
@@ -91,7 +91,7 @@ class ScannerIsolate {
     // Establish communication channel
     toMain.send(fromMain.sendPort);
     fromMain.listen((message) {
-      if (message.toString() == _status_message) {
+      if (message.toString() == _statusMessage) {
         toMain.send(report);
       }
     });

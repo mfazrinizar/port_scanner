@@ -42,13 +42,12 @@ class ScanResult {
 
   /// Main constructor
   ScanResult(
-      {String? host,
+      {this.host,
       List<int> ports = const [],
       List<int> open = const [],
       List<int> closed = const [],
       List<int> scanned = const [],
       ScanStatuses status = ScanStatuses.unknown}) {
-    this.host = host;
     this.ports.addAll(ports);
     this.open.addAll(open);
     this.closed.addAll(closed);

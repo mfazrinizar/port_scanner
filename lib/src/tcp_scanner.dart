@@ -3,9 +3,9 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:port_scanner/src/IsolateArguments.dart';
+import 'package:port_scanner/src/isolate_arguments.dart';
 
-import 'ScanResult.dart';
+import 'scan_result.dart';
 
 /// TCP port scanner
 @Deprecated('Use TcpScannerTask instead of TCPScanner')
@@ -71,14 +71,14 @@ class TCPScanner {
   /// Return scan status
   ScanResult get scanResult {
     var result = ScanResult(status: ScanStatuses.finished);
-    _isolateScanResults.forEach((isolateResult) {
+    for (var isolateResult in _isolateScanResults) {
       result.host = isolateResult.host;
       result
         ..ports.addAll(isolateResult.ports)
         ..scanned.addAll(isolateResult.scanned)
         ..open.addAll(isolateResult.open)
         ..closed.addAll(isolateResult.closed);
-    });
+    }
     result.status = _scanResult.status;
     result.elapsed = _scanResult.elapsed;
     return result;
@@ -139,6 +139,8 @@ class TCPScanner {
   }
 
   /// Execute scanning with no isolates
+  // TODO: use _noIsolateScan
+  // ignore: unused_element
   Future<ScanResult> _noIsolateScan() async {
     Socket? connection;
     final scanResult =
