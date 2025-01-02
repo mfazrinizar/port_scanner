@@ -1,7 +1,7 @@
 name: port_scanner
 description: A starting point for Dart libraries or applications.
-version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+version: 0.0.1
+repository: https://github.com/mfazrinizar/port_scanner
 
 environment:
   sdk: ^3.6.0
@@ -11,5 +11,6 @@ dependencies:
   # path: ^1.8.0
 
 dev_dependencies:
+  pedantic: ^1.11.1
   lints: ^5.0.0
   test: ^1.24.0

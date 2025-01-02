@@ -1,8 +1,8 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
-library;
+library port_scanner;
 
-export 'src/port_scanner_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/TCPScanner.dart';
+export 'src/ScanResult.dart';
+export 'src/IsolateArguments.dart';
+export 'src/presentation/tcp_scanner_task.dart';
+export 'src/presentation/tcp_scanner_task_exception.dart';
+export 'src/presentation/tcp_scanner_task_report.dart';
