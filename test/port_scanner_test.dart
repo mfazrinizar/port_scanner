@@ -1,6 +1,6 @@
 import 'package:dart_port_scanner/src/domain/entities/report.dart';
 import 'package:test/test.dart';
-import 'package:dart_port_scanner/port_scanner.dart';
+import 'package:dart_port_scanner/dart_port_scanner.dart';
 
 void main() {
   group('Report tests', () {
