@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
-import 'package:port_scanner/port_scanner.dart';
+import 'package:dart_port_scanner/port_scanner.dart';
 
 import '../domain/entities/report.dart';
 import '../domain/interactor/scanner_isolate_interactor.dart';

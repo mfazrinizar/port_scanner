@@ -1,4 +1,4 @@
-name: port_scanner
+name: dart_port_scanner
 description: A simple and fast port scanner for Dart, supporting both TCP and UDP scanning with asynchronous tasks, concurrency, and isolates.
 version: 0.0.1
 repository: https://github.com/mfazrinizar/port_scanner

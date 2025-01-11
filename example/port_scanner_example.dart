@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:port_scanner/port_scanner.dart';
+import 'package:dart_port_scanner/port_scanner.dart';
 
 enum ScanType { tcp, udp, stcp, sudp }
 
