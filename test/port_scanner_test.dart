@@ -1,131 +1,140 @@
-import 'dart:convert';
-
-import 'package:port_scanner/port_scanner.dart';
+import 'package:port_scanner/src/domain/entities/report.dart';
 import 'package:test/test.dart';
+import 'package:port_scanner/port_scanner.dart';
 
 void main() {
-  group('ScanResult tests', () {
-    ScanResult? noArgsResult,
-        hostPortsScanningResult,
-        hostPortsFinishedResult,
-        deserializedRegularJson,
-        deserializedBlankJson,
-        scanResultBuilder;
-    var regularJsonScanResult =
-        '{"host":"localhost","ports":[900,9000,3000,3030],"scanned":[900,9000,3000],"open":[9000],"closed":[900,3000],"elapsed":26,"status":"scanning"}';
-    var blankJsonScanResult = '{}';
+  group('Report tests', () {
+    Report? report;
 
     setUp(() {
-      noArgsResult = ScanResult();
-      hostPortsScanningResult = ScanResult(
-          host: 'host',
-          ports: [80, 8080, 443, 3000],
-          status: ScanStatuses.scanning);
-      hostPortsFinishedResult = ScanResult(
-          host: 'host',
-          ports: [80, 8080, 443, 3000],
-          status: ScanStatuses.finished);
-      deserializedRegularJson = ScanResult.fromJson(regularJsonScanResult);
-      deserializedBlankJson = ScanResult.fromJson(blankJsonScanResult);
-      scanResultBuilder = ScanResult();
-      scanResultBuilder?.status = ScanStatuses.scanning;
-      scanResultBuilder
-        ?..addPort(80)
-        ..addPort(8080)
-        ..addPort(443)
-        ..addPort(3000);
-      scanResultBuilder
-        ?..addScanned(80)
-        ..addScanned(8080)
-        ..addScanned(443);
-      scanResultBuilder
-        ?..addOpen(80)
-        ..addOpen(443);
-      scanResultBuilder?.addClosed(8080);
-      scanResultBuilder?.status = ScanStatuses.finished;
+      report = Report('localhost', [80, 443, 8080]);
     });
 
-    test('Constructor with no arguments test', () {
-      expect(noArgsResult?.host, isNull);
-      expect(noArgsResult?.ports, isList);
-      expect(noArgsResult?.ports, isEmpty);
-      expect(noArgsResult?.open, isList);
-      expect(noArgsResult?.open, isEmpty);
-      expect(noArgsResult?.closed, isList);
-      expect(noArgsResult?.closed, isEmpty);
-      expect(noArgsResult?.scanned, isList);
-      expect(noArgsResult?.scanned, isEmpty);
-      expect(noArgsResult?.status, ScanStatuses.unknown);
+    test('Initial state', () {
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.openPorts, isEmpty);
+      expect(report?.closedPorts, isEmpty);
+      expect(report?.filteredPorts, isEmpty);
+      expect(report?.status, equals(ReportStatus.undefined));
     });
 
-    test('Constructor with host, ports and initial status', () {
-      expect(hostPortsScanningResult?.host, equals('host'));
-      expect(
-          hostPortsScanningResult?.ports,
-          equals(
-            [80, 8080, 443, 3000],
-          ));
-      expect(hostPortsScanningResult?.status, equals(ScanStatuses.scanning));
-
-      expect(hostPortsFinishedResult?.host, equals('host'));
-      expect(
-          hostPortsFinishedResult?.ports,
-          equals(
-            [80, 8080, 443, 3000],
-          ));
-      expect(hostPortsFinishedResult?.status, equals(ScanStatuses.finished));
+    test('Add open port', () {
+      report?.addOpen(port: 80);
+      expect(report?.openPorts, equals([80]));
     });
 
-    test('Result builder methods tests', () {
-      expect(
-          scanResultBuilder?.ports,
-          equals(
-            [80, 8080, 443, 3000],
-          ));
-      expect(scanResultBuilder?.scanned, equals([80, 8080, 443]));
-      expect(scanResultBuilder?.open, equals([80, 443]));
-      expect(
-          scanResultBuilder?.closed,
-          equals([
-            8080,
-          ]));
-      expect(scanResultBuilder?.elapsed, equals(0));
-      expect(scanResultBuilder?.status, equals(ScanStatuses.finished));
+    test('Add closed port', () {
+      report?.addClosed(port: 443);
+      expect(report?.closedPorts, equals([443]));
     });
 
-    test('Serialization tests', () {
-      expect(
-          jsonEncode(ScanResult(
-              host: 'localhost',
-              ports: [900, 9000, 3030],
-              open: [9000],
-              scanned: [900, 9000, 3030],
-              closed: [900, 3030],
-              status: ScanStatuses.finished)),
-          equals(
-              '{"host":"localhost","ports":[900,9000,3030],"scanned":[900,9000,3030],"open":[9000],"closed":[900,3030],"elapsed":-1,"status":"finished"}'));
-      expect(deserializedRegularJson?.host, equals('localhost'));
-      expect(deserializedRegularJson?.ports, isList);
-      expect(deserializedRegularJson?.ports, equals([900, 9000, 3000, 3030]));
-      expect(deserializedRegularJson?.scanned, isList);
-      expect(deserializedRegularJson?.scanned, equals([900, 9000, 3000]));
-      expect(deserializedRegularJson?.open, isList);
-      expect(deserializedRegularJson?.open, equals([9000]));
-      expect(deserializedRegularJson?.closed, isList);
-      expect(deserializedRegularJson?.closed, equals([900, 3000]));
-      expect(deserializedRegularJson?.elapsed, equals(26));
-      expect(deserializedRegularJson?.status, equals(ScanStatuses.scanning));
+    test('Add filtered port', () {
+      report?.addFiltered(port: 8080);
+      expect(report?.filteredPorts, equals([8080]));
+    });
 
-      expect(deserializedBlankJson?.host, isNull);
-      expect(deserializedBlankJson?.ports, equals([]));
-      expect(deserializedBlankJson?.scanned, isList);
-      expect(deserializedBlankJson?.scanned, equals([]));
-      expect(deserializedBlankJson?.open, isList);
-      expect(deserializedBlankJson?.open, equals([]));
-      expect(deserializedBlankJson?.closed, isList);
-      expect(deserializedBlankJson?.closed, equals([]));
-      expect(deserializedBlankJson?.status, equals(ScanStatuses.unknown));
-      expect(deserializedBlankJson?.elapsed, equals(-1));
+    test('Add multiple open ports', () {
+      report?.addOpen(ports: [80, 443]);
+      expect(report?.openPorts, equals([80, 443]));
+    });
+
+    test('Add multiple closed ports', () {
+      report?.addClosed(ports: [8080, 3000]);
+      expect(report?.closedPorts, equals([8080, 3000]));
+    });
+
+    test('Add multiple filtered ports', () {
+      report?.addFiltered(ports: [5000, 6000]);
+      expect(report?.filteredPorts, equals([5000, 6000]));
+    });
+  });
+
+  group('UdpScannerTask tests', () {
+    UdpScannerTask? udpScannerTask;
+
+    setUp(() {
+      udpScannerTask = UdpScannerTask(
+        'localhost',
+        [80, 443, 8080],
+        socketTimeout: Duration(seconds: 1),
+        shuffle: false,
+        parallelism: 2,
+      );
+    });
+
+    test('Initial state', () {
+      expect(udpScannerTask?.host, equals('localhost'));
+      expect(udpScannerTask?.ports, equals([80, 443, 8080]));
+      expect(udpScannerTask?.socketTimeout, equals(Duration(seconds: 1)));
+      expect(udpScannerTask?.shuffle, isFalse);
+      expect(udpScannerTask?.parallelism, equals(2));
+    });
+
+    test('Start scan', () async {
+      var report = await udpScannerTask?.start();
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.finished));
+    });
+
+    test('Cancel scan', () async {
+      var report = await udpScannerTask?.cancel();
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.cancelled));
+    });
+
+    test('Get report during scan', () async {
+      udpScannerTask?.start();
+      var report = await udpScannerTask?.report;
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.progress));
+    });
+  });
+
+  group('TcpScannerTask tests', () {
+    TcpScannerTask? tcpScannerTask;
+
+    setUp(() {
+      tcpScannerTask = TcpScannerTask(
+        'localhost',
+        [80, 443, 8080],
+        socketTimeout: Duration(seconds: 1),
+        shuffle: false,
+        parallelism: 2,
+      );
+    });
+
+    test('Initial state', () {
+      expect(tcpScannerTask?.host, equals('localhost'));
+      expect(tcpScannerTask?.ports, equals([80, 443, 8080]));
+      expect(tcpScannerTask?.socketTimeout, equals(Duration(seconds: 1)));
+      expect(tcpScannerTask?.shuffle, isFalse);
+      expect(tcpScannerTask?.parallelism, equals(2));
+    });
+
+    test('Start scan', () async {
+      var report = await tcpScannerTask?.start();
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.finished));
+    });
+
+    test('Cancel scan', () async {
+      var report = await tcpScannerTask?.cancel();
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.cancelled));
+    });
+
+    test('Get report during scan', () async {
+      tcpScannerTask?.start();
+      var report = await tcpScannerTask?.report;
+      expect(report?.host, equals('localhost'));
+      expect(report?.ports, equals([80, 443, 8080]));
+      expect(report?.status, equals(PortScannerTaskReportStatus.progress));
     });
   });
 }

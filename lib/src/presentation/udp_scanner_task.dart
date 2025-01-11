@@ -1,12 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
+import 'package:port_scanner/port_scanner.dart';
 
-import 'port_scanner_task_report.dart';
 import '../domain/entities/report.dart';
 import '../domain/interactor/scanner_isolate_interactor.dart';
-import 'port_scanner_task_exception.dart';
 
-class TcpScannerTask {
+class UdpScannerTask {
   final String host;
   late final List<int> ports;
   final Duration socketTimeout;
@@ -14,11 +14,10 @@ class TcpScannerTask {
   late final int parallelism;
   bool _isRunning = false;
   final List<ScannerIsolateInteractor> _scanners = [];
+  late final InternetAddress hostAddress;
 
-  bool get isRunning => _isRunning;
-
-  TcpScannerTask(this.host, List<int> ports,
-      {this.socketTimeout = const Duration(seconds: 1),
+  UdpScannerTask(this.host, List<int> ports,
+      {this.socketTimeout = const Duration(milliseconds: 1000),
       this.shuffle = false,
       int parallelism = 4}) {
     if (ports.isEmpty) {
@@ -37,12 +36,27 @@ class TcpScannerTask {
     this.parallelism = min(parallelism, ports.length);
   }
 
+  Future<void> _resolveHost() async {
+    try {
+      final addresses = await InternetAddress.lookup(host);
+      if (addresses.isNotEmpty) {
+        hostAddress = addresses.first;
+      } else {
+        throw PortScannerTaskException('Failed to resolve host: $host');
+      }
+    } catch (e) {
+      throw PortScannerTaskException('Failed to resolve host: $host');
+    }
+  }
+
   /// Start scanning task
   Future<PortScannerTaskReport> start() async {
     if (_isRunning) {
       throw PortScannerTaskException('Scanning is already in progress');
     }
     _isRunning = true;
+
+    await _resolveHost();
 
     // Split ports into sublists based on parallelism
     var portsPerScanner = (ports.length / parallelism).ceil();
@@ -61,6 +75,7 @@ class TcpScannerTask {
           shuffle: shuffle,
           parallelism: 1, // Assuming one isolate per sublist
           socketTimeout: socketTimeout,
+          useUdp: true, // Indicate that this is a UDP scan
         ),
       );
     }
@@ -89,7 +104,7 @@ class TcpScannerTask {
   /// Cancel scanning task
   Future<PortScannerTaskReport> cancel() async {
     if (!_isRunning) {
-      throw PortScannerTaskException('TcpScannerTask can\'t be cancelled');
+      throw PortScannerTaskException('UdpScannerTask can\'t be cancelled');
     }
     for (var scanner in _scanners) {
       scanner.cancel();

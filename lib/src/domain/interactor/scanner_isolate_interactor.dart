@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import '../../data/scanner_isolate.dart';
+import '../../data/tcp_scanner_isolate.dart';
+import '../../data/udp_scanner_isolate.dart';
 import '../entities/report.dart';
 import 'use_case.dart';
 
@@ -10,25 +11,49 @@ class ScannerIsolateInteractor implements UseCase {
   final int parallelism;
   final bool shuffle;
   final Duration socketTimeout;
+  final bool useUdp;
 
-  late ScannerIsolate _scannerIsolate;
+  late TcpScannerIsolate _scannerIsolate;
+  late UdpScannerIsolate _udpScannerIsolate;
 
   ScannerIsolateInteractor(this.host, this.ports,
       {this.parallelism = 4,
       this.shuffle = false,
-      this.socketTimeout = const Duration(milliseconds: 100)}) {
-    _scannerIsolate =
-        ScannerIsolate(host: host, ports: ports, socketTimeout: socketTimeout);
+      this.socketTimeout = const Duration(milliseconds: 1000),
+      this.useUdp = false}) {
+    if (useUdp) {
+      _udpScannerIsolate = UdpScannerIsolate(
+          host: host, ports: ports, socketTimeout: socketTimeout);
+    } else {
+      _scannerIsolate = TcpScannerIsolate(
+          host: host, ports: ports, socketTimeout: socketTimeout);
+    }
   }
 
   @override
   void cancel() {
-    _scannerIsolate.terminate();
+    if (useUdp) {
+      _udpScannerIsolate.terminate();
+    } else {
+      _scannerIsolate.terminate();
+    }
   }
 
   @override
-  Future<Report> scan() => _scannerIsolate.scan();
+  Future<Report> scan() {
+    if (useUdp) {
+      return _udpScannerIsolate.scan();
+    } else {
+      return _scannerIsolate.scan();
+    }
+  }
 
   @override
-  Future<Report> get report => _scannerIsolate.report;
+  Future<Report> get report {
+    if (useUdp) {
+      return _udpScannerIsolate.report;
+    } else {
+      return _scannerIsolate.report;
+    }
+  }
 }
