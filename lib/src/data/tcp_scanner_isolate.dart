@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'scanner_isolate_args.dart';
+
 import '../domain/entities/report.dart';
 
-class ScannerIsolate {
+class TcpScannerIsolate {
   static const String _statusMessage = 'status';
   final String host;
   final List<int> ports;
@@ -18,7 +20,7 @@ class ScannerIsolate {
   Stream<Report> get result => _streamController.stream;
   Report? _report;
 
-  ScannerIsolate({
+  TcpScannerIsolate({
     required this.host,
     required this.ports,
     this.socketTimeout = const Duration(milliseconds: 100),
@@ -39,9 +41,14 @@ class ScannerIsolate {
       }
     });
     _isolate = await Isolate.spawn(
-        _scan,
-        ScannerIsolateArgs(
-            sendPort: _fromIsolate.sendPort, host: host, ports: ports));
+      _scan,
+      ScannerIsolateArgs(
+        sendPort: _fromIsolate.sendPort,
+        host: host,
+        ports: ports,
+        timeout: socketTimeout,
+      ),
+    );
     _report = await scanResult.stream.first;
     terminate();
     return report;
@@ -110,19 +117,4 @@ class ScannerIsolate {
     report.status = ReportStatus.finished;
     toMain.send(report);
   }
-}
-
-/// Scanner arguments class
-class ScannerIsolateArgs {
-  final SendPort sendPort;
-  final String host;
-  final List<int> ports;
-  final Duration timeout;
-
-  ScannerIsolateArgs({
-    required this.sendPort,
-    required this.host,
-    required this.ports,
-    this.timeout = const Duration(milliseconds: 100),
-  });
 }

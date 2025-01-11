@@ -8,6 +8,8 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
+  win32: ^5.10.0
+  ffi: ^2.1.3
   # path: ^1.8.0
 
 dev_dependencies:
