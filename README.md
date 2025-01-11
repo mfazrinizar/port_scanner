@@ -8,7 +8,7 @@ Simple and fast port scanner for TCP and UDP.
 TcpScannerTask allows you to execute scanning tasks asynchronously and provides basic methods to control the task.
 You can set `shuffle` to true if you need to shuffle ports. By default, socket connect timeout is 2 seconds.
 After this time the port will be marked as `closed` if the response isn't received.
-You may change this value by setting the `socketTimeout` option. By default, `socketTimeout` equals 100 ms. You can specify the number of isolates to scan by
+You may change this value by setting the `socketTimeout` option. By default, `socketTimeout` equals 1000 ms. You can specify the number of isolates to scan by
 defining the `parallelism` option. By default, parallelism equals 4.
 
 To execute a simple task, use the start method and wait for the result.

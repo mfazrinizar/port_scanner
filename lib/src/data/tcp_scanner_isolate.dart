@@ -23,7 +23,7 @@ class TcpScannerIsolate {
   TcpScannerIsolate({
     required this.host,
     required this.ports,
-    this.socketTimeout = const Duration(milliseconds: 100),
+    this.socketTimeout = const Duration(milliseconds: 1000),
   });
 
   Future<Report> scan() async {

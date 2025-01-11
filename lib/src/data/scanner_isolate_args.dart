@@ -13,7 +13,7 @@ class ScannerIsolateArgs {
     required this.sendPort,
     required this.host,
     required this.ports,
-    this.timeout = const Duration(milliseconds: 100),
+    this.timeout = const Duration(milliseconds: 1000),
     this.icmpAllowed = false,
     this.errorPort,
   });
