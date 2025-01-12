@@ -6,16 +6,37 @@ import 'package:dart_port_scanner/dart_port_scanner.dart';
 import '../domain/entities/report.dart';
 import '../domain/interactor/scanner_isolate_interactor.dart';
 
+/// A class for handling UDP scanning tasks.
 class UdpScannerTask {
+  /// The host to scan.
   final String host;
+
+  /// The list of ports to scan.
   late final List<int> ports;
+
+  /// The timeout duration for the socket connection.
   final Duration socketTimeout;
+
+  /// Whether to shuffle the ports before scanning.
   final bool shuffle;
+
+  /// The number of parallel isolates to use for scanning.
   late final int parallelism;
+
   bool _isRunning = false;
+
   final List<ScannerIsolateInteractor> _scanners = [];
+
+  /// The resolved Internet address of the host.
   late final InternetAddress hostAddress;
 
+  /// Creates a new instance of [UdpScannerTask].
+  ///
+  /// [host] The host to scan.
+  /// [ports] The list of ports to scan.
+  /// [socketTimeout] The timeout duration for the socket connection.
+  /// [shuffle] Whether to shuffle the ports before scanning.
+  /// [parallelism] The number of parallel isolates to use for scanning.
   UdpScannerTask(this.host, List<int> ports,
       {this.socketTimeout = const Duration(milliseconds: 1000),
       this.shuffle = false,
@@ -49,7 +70,7 @@ class UdpScannerTask {
     }
   }
 
-  /// Start scanning task
+  /// Starts the scanning task and returns a [PortScannerTaskReport] with the results.
   Future<PortScannerTaskReport> start() async {
     if (_isRunning) {
       throw PortScannerTaskException('Scanning is already in progress');
@@ -101,7 +122,7 @@ class UdpScannerTask {
     }
   }
 
-  /// Cancel scanning task
+  /// Cancels the scanning task.
   Future<PortScannerTaskReport> cancel() async {
     if (!_isRunning) {
       throw PortScannerTaskException('UdpScannerTask can\'t be cancelled');
@@ -114,7 +135,7 @@ class UdpScannerTask {
     return _reportToPortScannerTaskReport(scanReport);
   }
 
-  /// Request scan report
+  /// Requests the current scan report.
   Future<PortScannerTaskReport> get report async {
     if (!_isRunning) {
       throw PortScannerTaskException('Scanning is not in progress');
@@ -135,7 +156,7 @@ class UdpScannerTask {
     return _reportToPortScannerTaskReport(partialReport);
   }
 
-  /// Convert Report to PortScannerTaskReport
+  /// Converts a [Report] to a [PortScannerTaskReport].
   PortScannerTaskReport _reportToPortScannerTaskReport(Report report) {
     PortScannerTaskReportStatus status;
     switch (report.status) {

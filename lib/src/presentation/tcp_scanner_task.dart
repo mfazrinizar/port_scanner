@@ -6,17 +6,37 @@ import '../domain/entities/report.dart';
 import '../domain/interactor/scanner_isolate_interactor.dart';
 import 'port_scanner_task_exception.dart';
 
+/// A class for handling TCP scanning tasks.
 class TcpScannerTask {
+  /// The host to scan.
   final String host;
+
+  /// The list of ports to scan.
   late final List<int> ports;
+
+  /// The timeout duration for the socket connection.
   final Duration socketTimeout;
+
+  /// Whether to shuffle the ports before scanning.
   final bool shuffle;
+
+  /// The number of parallel isolates to use for scanning.
   late final int parallelism;
+
   bool _isRunning = false;
+
   final List<ScannerIsolateInteractor> _scanners = [];
 
+  /// Indicates if the scanning task is currently running.
   bool get isRunning => _isRunning;
 
+  /// Creates a new instance of [TcpScannerTask].
+  ///
+  /// [host] The host to scan.
+  /// [ports] The list of ports to scan.
+  /// [socketTimeout] The timeout duration for the socket connection.
+  /// [shuffle] Whether to shuffle the ports before scanning.
+  /// [parallelism] The number of parallel isolates to use for scanning.
   TcpScannerTask(this.host, List<int> ports,
       {this.socketTimeout = const Duration(seconds: 1),
       this.shuffle = false,
@@ -37,7 +57,7 @@ class TcpScannerTask {
     this.parallelism = min(parallelism, ports.length);
   }
 
-  /// Start scanning task
+  /// Starts the scanning task and returns a [PortScannerTaskReport] with the results.
   Future<PortScannerTaskReport> start() async {
     if (_isRunning) {
       throw PortScannerTaskException('Scanning is already in progress');
@@ -86,7 +106,7 @@ class TcpScannerTask {
     }
   }
 
-  /// Cancel scanning task
+  /// Cancels the scanning task.
   Future<PortScannerTaskReport> cancel() async {
     if (!_isRunning) {
       throw PortScannerTaskException('TcpScannerTask can\'t be cancelled');
@@ -99,7 +119,7 @@ class TcpScannerTask {
     return _reportToPortScannerTaskReport(scanReport);
   }
 
-  /// Request scan report
+  /// Requests the current scan report.
   Future<PortScannerTaskReport> get report async {
     if (!_isRunning) {
       throw PortScannerTaskException('Scanning is not in progress');
@@ -120,7 +140,7 @@ class TcpScannerTask {
     return _reportToPortScannerTaskReport(partialReport);
   }
 
-  /// Convert Report to PortScannerTaskReport
+  /// Converts a [Report] to a [PortScannerTaskReport].
   PortScannerTaskReport _reportToPortScannerTaskReport(Report report) {
     PortScannerTaskReportStatus status;
     switch (report.status) {

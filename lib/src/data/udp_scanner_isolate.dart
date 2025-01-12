@@ -7,33 +7,49 @@ import '../domain/entities/report.dart';
 import 'scanner_isolate_args.dart';
 import 'socket_udp.dart';
 
+/// A class for handling UDP scanning tasks in an isolate.
 class UdpScannerIsolate {
   static const String _statusMessage = 'status';
   static const String _errorPortMessage = 'exception';
+
+  /// The host to scan.
   final String host;
+
+  /// The list of ports to scan.
   final List<int> ports;
+
+  /// The timeout duration for the scan.
   final Duration socketTimeout;
+
   final ReceivePort _fromIsolate = ReceivePort();
   final ReceivePort _errorPort = ReceivePort();
   SendPort? _toIsolate;
   Isolate? _isolate;
   final Capability _capability = Capability();
   StreamController<Report> _streamController = StreamController<Report>();
+
+  /// Indicates if there was an error during the scan.
   bool isError = false;
 
+  /// A stream of scan results.
   Stream<Report> get result => _streamController.stream;
   Report? _report;
 
+  /// Creates a new instance of [UdpScannerIsolate].
+  ///
+  /// [host] The host to scan.
+  /// [ports] The list of ports to scan.
+  /// [socketTimeout] The timeout duration for the scan.
   UdpScannerIsolate({
     required this.host,
     required this.ports,
     this.socketTimeout = const Duration(milliseconds: 1000),
   });
 
+  /// Starts the scan and returns a [Report] with the results.
   Future<Report> scan() async {
     var scanResult = StreamController<Report>();
     _fromIsolate.listen((message) {
-      // print(message.toString());
       if (message is SendPort) {
         _toIsolate = message;
       } else {
@@ -48,17 +64,11 @@ class UdpScannerIsolate {
       }
     });
     _errorPort.listen((message) {
-      // print("Error in isolate: $message");
       // Handle the error and continue processing
       _toIsolate
           ?.send({'type': _errorPortMessage, 'error': message.toString()});
 
       resume();
-
-      // if (!_streamController.isClosed) {
-      //   _streamController.addError(message);
-      //   isError = true;
-      // }
     });
     _isolate = await Isolate.spawn(
       _scan,
@@ -80,6 +90,7 @@ class UdpScannerIsolate {
     return report;
   }
 
+  /// Gets the current scan report.
   Future<Report> get report async {
     Report result;
     if (_report != null) {
@@ -104,16 +115,19 @@ class UdpScannerIsolate {
     _streamController = StreamController();
   }
 
+  /// Terminates the isolate.
   void terminate() {
     _fromIsolate.close();
     _errorPort.close();
     _isolate?.kill();
   }
 
+  /// Pauses the isolate.
   void pause() {
     _isolate?.pause(_capability);
   }
 
+  /// Resumes the isolate.
   void resume() {
     _isolate?.resume(_capability);
   }
@@ -147,7 +161,6 @@ class UdpScannerIsolate {
 
         var completer = Completer<void>();
         var timer = Timer(timeout, () {
-          // print("Timeout for port $port");
           if (!completer.isCompleted) completer.completeError('Timeout');
         });
 
@@ -155,20 +168,16 @@ class UdpScannerIsolate {
         Future(() async {
           try {
             socketUDP.send(payload, serverAddress, port);
-            // print("Sending payload to $serverAddress:$port");
           } catch (e) {
-            // print("Error sending payload to $serverAddress:$port: $e");
             if (!completer.isCompleted) completer.completeError(e);
           }
         });
 
         var subscription = socketUDP.onDatagramReceived.listen((datagram) {
           if (datagram.address == serverAddress && datagram.port == port) {
-            // print("Received response from port $port");
             if (!completer.isCompleted) completer.complete();
           }
         }, onError: (error) {
-          // print("Error receiving datagram for port $port: $error");
           if (!completer.isCompleted) completer.completeError(error);
         }, cancelOnError: true);
 
@@ -177,13 +186,10 @@ class UdpScannerIsolate {
           report.addOpen(port: port);
         } catch (e) {
           if (e == 'Timeout') {
-            // print("Port $port timed out due to Timer.");
             report.addFiltered(port: port);
           } else if (e is SocketException && e.osError?.errorCode == 111) {
-            // print("Port $port is closed.");
             report.addClosed(port: port);
           } else {
-            // print("Error during scanning port $port: $e");
             report.addFiltered(port: port);
           }
         } finally {
@@ -191,16 +197,12 @@ class UdpScannerIsolate {
           timer.cancel();
         }
       } on SocketException catch (e) {
-        // print("SocketException for port $port: $e");
         report.addClosed(port: port);
         errorPort?.send(e); // Send the error to the errorPort
       } catch (e) {
-        // print("Error scanning port $port: $e");
         report.addClosed(port: port);
         errorPort?.send(e); // Send the error to the errorPort
-      } finally {
-        // print("finally for port $port");
-      }
+      } finally {}
     }
 
     // Close the socket
